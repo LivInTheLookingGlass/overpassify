@@ -62,13 +62,13 @@ Here's a somewhat-complete feature table:
 | Assignment         | `<expr> -> .name`                 | `name = <expr> `                    |
 | Unions             | `(<set>; ...; <set>)`             | `<set> + ... + <set>`               |
 | Difference         | `(<set> - <set)`                  | `<set> - <set>`                     |
-| Intersection       | `.<set>.<set>`                    | `Set.intersect(<set, <set>)`        |
-| Type-filtering     | `way.<set>`                       | `Way.filter(<set)`                  |
+| Intersection       | `.<set>.<set>`                    | `Set.intersect(<set>, <set>)`       |
+| Type-filtering     | `way.<set>`                       | `Way.filter(<set>)`                 |
 | Searching          |                                   |                                     |
 | ..By ID            | `area(1)` or `way(7)`             | `Area(1)` or `Way(7)`               |
 | ..In an area       | `way(area.<set>)`                 | `Way(<set>)`                        |
 | ..By tags          | `way["tag"="value"]`              | `Way(tag=value)`                    |
-| ..In area + tag    | `way["highway"="*"](area.<set>)`  | `Way(<set>, highway="*"`            |
+| ..In area + tag    | `way["highway"="*"](area.<set>)`  | `Way(<set>, highway="*")`           |
 | Ternary            | very long                         | `<expr> if <condition> else <expr>` |
 | Conditional Filter | `<type>.<set>(if: <condition>)`\* | `<expr> if <condition> else Set()`  |
 
