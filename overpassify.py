@@ -7,7 +7,7 @@ from dill.source import getsource as dillgetsource
 
 @singledispatch
 def overpassify(query):
-    raise TypeError('overpassify does not support what you just fed')
+    raise TypeError('Overpassify does not support {}.'.format(type(query)))
 
 
 @overpassify.register(str)
