@@ -53,20 +53,23 @@ And from that generate
 .nodes out geom;
 ```
 
-That last `out()` is because of https://github.com/LivInTheLookingGlass/overpassify/issues/2. And as a note, this library assumes you never use a variable name of the form `tmp*`. That format will probably be changed to something even less likely in the future, but some translations *require* the use of temporary variables.
+That last `out()` is because of [issue #2](https://github.com/LivInTheLookingGlass/overpassify/issues/2). And as a note, this library assumes you never use a variable name of the form `tmp*`. That format will probably be changed to something even less likely in the future, but some translations (for instance, a full ternary) *require* the use of temporary variables.
 
 Here's a somewhat-complete feature table:
 
-| Feature         | OverpassQL                       | Python                              |
-| --------------- | -------------------------------- | ----------------------------------- |
-| Assignment      | `<expr> -> .name`                | `name = <expr> `                    |
-| Unions          | `(<set>; ...; <set>)`            | `<set> + ... + <set>`               |
-| Difference      | `(<set> - <set)`                 | `<set> - <set>`                     |
-| Intersection    | `.<set>.<set>`                   | `Set.intersect(<set, <set>)`        |
-| Type-filtering  | `way.<set>`                      | `Way.filter(<set)`                  |
-| Searching       |                                  |                                     |
-| ..By ID         | `area(1)` or `way(7)`            | `Area(1)` or `Way(7)`               |
-| ..In an area    | `way(area.<set>)`                | `Way(<set>)`                        |
-| ..By tags       | `way["tag"="value"]`             | `Way(tag=value)`                    |
-| ..In area + tag | `way["highway"="*"](area.<set>)` | `Way(<set>, highway="*"`            |
-| Ternery         | very long                        | `<expr> if <condition> else <expr>` |
+| Feature            | OverpassQL                        | Python                              |
+| ------------------ | --------------------------------- | ----------------------------------- |
+| Assignment         | `<expr> -> .name`                 | `name = <expr> `                    |
+| Unions             | `(<set>; ...; <set>)`             | `<set> + ... + <set>`               |
+| Difference         | `(<set> - <set)`                  | `<set> - <set>`                     |
+| Intersection       | `.<set>.<set>`                    | `Set.intersect(<set, <set>)`        |
+| Type-filtering     | `way.<set>`                       | `Way.filter(<set)`                  |
+| Searching          |                                   |                                     |
+| ..By ID            | `area(1)` or `way(7)`             | `Area(1)` or `Way(7)`               |
+| ..In an area       | `way(area.<set>)`                 | `Way(<set>)`                        |
+| ..By tags          | `way["tag"="value"]`              | `Way(tag=value)`                    |
+| ..In area + tag    | `way["highway"="*"](area.<set>)`  | `Way(<set>, highway="*"`            |
+| Ternary            | very long                         | `<expr> if <condition> else <expr>` |
+| Conditional Filter | `<type>.<set>(if: <condition>)`\* | `<expr> if <condition> else Set()`  |
+
+\* `overpassify` will allow for mixed sets here by repeating for each type. This may be optimized better in the future.

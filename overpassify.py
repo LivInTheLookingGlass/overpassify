@@ -147,15 +147,28 @@ def _(num, **kwargs):
 
 @parse.register(_ast.IfExp)
 def _(ifExp, **kwargs):
-    return '''
-    {expr1} -> {name};
-    (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
-    {expr2} -> .tmp{tmpname};
-    ({name}; way.tmp{tmpname}(if: !({condition})); area.tmp{tmpname}(if: !({condition})); node.tmp{tmpname}(if: !({condition})); relation.tmp{tmpname}(if: !({condition}));) -> {name};
-    '''.format(
-        expr1=parse(ifExp.body),
-        expr2=parse(ifExp.orelse),
-        name=parse(kwargs['name']),
-        tmpname=parse(kwargs['name'])[1:],
-        condition=parse(ifExp.test)
-    )
+    expr1 = parse(ifExp.body)
+    expr2 = parse(ifExp.orelse)
+    name = parse(kwargs['name'])
+    condition = parse(ifExp.test)
+    if expr2 != '()':
+        tmpname = '.tmp' + name[1:]
+        return '''{expr1} -> {name};
+        (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
+        {expr2} -> {tmpname};
+        ({name}; way{tmpname}(if: !({condition})); area{tmpname}(if: !({condition})); node{tmpname}(if: !({condition})); relation{tmpname}(if: !({condition}));) -> {name};
+        '''.format(
+            expr1=expr1,
+            expr2=expr2,
+            name=name,
+            tmpname=tmpname,
+            condition=condition
+        )
+    else:
+        return '''{expr1} -> {name};
+        (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
+        '''.format(
+            expr1=expr1,
+            name=name,
+            condition=condition
+        )
