@@ -37,10 +37,13 @@ def _(source, **kwargs):
 
 @parse.register(_ast.Assign)
 def _(assignment, **kwargs):
-    return '({};) -> {};'.format(
-        parse(assignment.value),
-        parse(assignment.targets[0])
-    )
+    if isinstance(assignment.value, (_ast.IfExp)):
+        return parse(assignment.value, name=assignment.targets[0])
+    else:
+        return '({};) -> {};'.format(
+            parse(assignment.value),
+            parse(assignment.targets[0])
+        )
 
 
 @parse.register(_ast.Expr)
@@ -79,7 +82,7 @@ def _(call, **kwargs):
     if name.endswith('.intersect'):
         overpasstype = (name.split('.')[0]).replace('set', '').lower()
         return overpasstype + ''.join((parse(arg) for arg in call.args))
-    if name.endswith('.filter'):
+    elif name.endswith('.filter'):
         overpasstype = (name.split('.')[0]).lower()
         return overpasstype + parse(call.args[0])
     elif name == 'out':
@@ -92,6 +95,8 @@ def _(call, **kwargs):
         if 'count' in out_channels:
             ret += element + ' out count;\n'
             out_channels.remove('count')
+            if len(out_channels) == 0:
+                return ret
         return ret + element + ' out {};'.format(' '.join(out_channels))
     elif name == 'Set':
         return '({})'.format(
@@ -138,3 +143,19 @@ def _(string, **kwargs):
 @parse.register(_ast.Num)
 def _(num, **kwargs):
     return "{}".format(num.n)
+
+
+@parse.register(_ast.IfExp)
+def _(ifExp, **kwargs):
+    return '''
+    {expr1} -> {name};
+    (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
+    {expr2} -> .tmp{tmpname};
+    ({name}; way.tmp{tmpname}(if: !({condition})); area.tmp{tmpname}(if: !({condition})); node.tmp{tmpname}(if: !({condition})); relation.tmp{tmpname}(if: !({condition}));) -> {name};
+    '''.format(
+        expr1=parse(ifExp.body),
+        expr2=parse(ifExp.orelse),
+        name=parse(kwargs['name']),
+        tmpname=parse(kwargs['name'])[1:],
+        condition=parse(ifExp.test)
+    )
