@@ -5,6 +5,8 @@ from types import FunctionType
 
 from dill.source import getsource as dillgetsource
 
+TMP_PREFIX = 'tmp'
+
 @singledispatch
 def overpassify(query):
     raise TypeError('Overpassify does not support {}.'.format(type(query)))
@@ -152,7 +154,7 @@ def _(ifExp, **kwargs):
     name = parse(kwargs['name'])
     condition = parse(ifExp.test)
     if expr2 != '()':
-        tmpname = '.tmp' + name[1:]
+        tmpname = '.' + TMP_PREFIX + name[1:]
         return '''{expr1} -> {name};
         (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
         {expr2} -> {tmpname};
@@ -181,11 +183,13 @@ def _(forExp, **kwargs):
     orelse = forExp.orelse
     if len(orelse) > 0:
         raise SyntaxError("overpassify does not yet support for-each-if")
-    return '''({collection};) -> .tmpfor;
-    foreach.tmpfor->{slot}(
+    tmpfor = TMP_PREFIX + 'for'
+    return '''({collection};) -> .{tmpfor};
+    foreach.{tmpfor}->{slot}(
         {body}
     );'''.format(
         collection=collection,
         slot=slot,
-        body=";\n".join(parse(expr) for expr in forExp.body)
+        body=";\n".join(parse(expr) for expr in forExp.body),
+        tmpfor=tmpfor
     )
