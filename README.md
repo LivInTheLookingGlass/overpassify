@@ -71,5 +71,6 @@ Here's a somewhat-complete feature table:
 | ..In area + tag    | `way["highway"="*"](area.<set>)`  | `Way(<set>, highway="*"`            |
 | Ternary            | very long                         | `<expr> if <condition> else <expr>` |
 | Conditional Filter | `<type>.<set>(if: <condition>)`\* | `<expr> if <condition> else Set()`  |
+| For Loop           | `foreach.<set>->.<each>(<body>)`  | `for <each> in <set>:\n    <body>`  |
 
 \* `overpassify` will allow for mixed sets here by repeating for each type. This may be optimized better in the future.

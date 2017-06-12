@@ -172,3 +172,20 @@ def _(ifExp, **kwargs):
             name=name,
             condition=condition
         )
+
+
+@parse.register(_ast.For)
+def _(forExp, **kwargs):
+    collection = parse(forExp.iter)
+    slot = parse(forExp.target)
+    orelse = forExp.orelse
+    if len(orelse) > 0:
+        raise SyntaxError("overpassify does not yet support for-each-if")
+    return '''({collection};) -> .tmpfor;
+    foreach.tmpfor->{slot}(
+        {body}
+    );'''.format(
+        collection=collection,
+        slot=slot,
+        body=";\n".join(parse(expr) for expr in forExp.body)
+    )
