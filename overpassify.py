@@ -104,7 +104,7 @@ def _(call, **kwargs):
         return '({})'.format(
             '; '.join((parse(arg) for arg in call.args))
         )
-    elif name in {'Way', 'Node', 'Area'}:
+    elif name in {'Way', 'Node', 'Area', 'Relation'}:
         overpasstype = (name.split('.')[0]).lower()
         if len(call.args) == 1:
             arg = parse(call.args[0])
