@@ -176,6 +176,32 @@ def _(ifExp, **kwargs):
         )
 
 
+@parse.register(_ast.If)
+def _(ifBlock, **kwargs):
+    tmpname = TMP_PREFIX + 'if'
+    test = parse(ifBlock.test)
+    ret = '''(relation(2186646);) -> .{tmpname};
+    (relation.{tmpname}(if: {test});) -> .{tmpname}body;
+    foreach.{tmpname}body(
+        {body}
+    );'''.format(
+        tmpname=tmpname,
+        test=test,
+        body='\n        '.join(parse(expr) for expr in ifBlock.body)
+    )
+    if len(ifBlock.orelse) > 0:
+        ret += '''
+        (relation.{tmpname}(if: !({test}));) -> .{tmpname}else;
+        foreach.{tmpname}else(
+            {body}
+        );'''.format(
+            tmpname=tmpname,
+            test=test,
+            body='\n        '.join(parse(expr) for expr in ifBlock.orelse)
+        )
+    return ret
+
+
 @parse.register(_ast.For)
 def _(forExp, **kwargs):
     collection = parse(forExp.iter)
