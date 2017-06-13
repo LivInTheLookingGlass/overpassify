@@ -247,7 +247,7 @@ def _(num, **kwargs):
 def _(ifExp, **kwargs):
     expr1 = parse(ifExp.body)
     expr2 = parse(ifExp.orelse)
-    name = parse(kwargs['name'])
+    name = parse(kwargs['name']) if 'name' in kwargs else '._'
     condition = parse(ifExp.test)
     if expr2 != '()':
         tmpname = '.' + TMP_PREFIX + name[1:]
