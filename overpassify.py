@@ -34,7 +34,19 @@ def parse(source, **kwargs):
 @parse.register(str)
 def _(source, **kwargs):
     tree = ast.parse(source).body[0].body
-    return '\n'.join(parse(expr) for expr in tree)
+    options = ''
+    if isinstance(tree[0], _ast.Expr) and isinstance(tree[0].value, _ast.Call):
+        # test for Settings()
+        func = tree[0].value.func.id
+        if func == 'Settings':
+            keywords = (parse(kwarg) for kwarg in tree[0].value.keywords)
+            for key, value in keywords:
+                if value[0] == '"':
+                    options += '[{}:{}]\n'.format(key, value[1:-1])
+                else:
+                    options += '[{}:{}]\n'.format(key, value)
+            tree = tree[1:]
+    return options + '\n'.join(parse(expr) for expr in tree)
 
 
 @parse.register(_ast.Assign)
@@ -188,8 +200,7 @@ def _(ifBlock, **kwargs):
     ret = '''(relation(2186646);) -> .{tmpname};
     (relation.{tmpname}(if: {test});) -> .{tmpname}body;
     foreach.{tmpname}body(
-        {body}
-    );'''.format(
+        {body});'''.format(
         tmpname=tmpname,
         test=test,
         body='\n        '.join(parse(expr) for expr in ifBlock.body)
@@ -198,8 +209,7 @@ def _(ifBlock, **kwargs):
         ret += '''
         (relation.{tmpname}(if: !({test}));) -> .{tmpname}else;
         foreach.{tmpname}else(
-            {body}
-        );'''.format(
+            {body});'''.format(
             tmpname=tmpname,
             test=test,
             body='\n        '.join(parse(expr) for expr in ifBlock.orelse)
@@ -217,8 +227,7 @@ def _(forExp, **kwargs):
     tmpfor = TMP_PREFIX + 'for'
     return '''({collection};) -> .{tmpfor};
     foreach.{tmpfor}->{slot}(
-        {body}
-    );'''.format(
+        {body});'''.format(
         collection=collection,
         slot=slot,
         body=";\n".join(parse(expr) for expr in forExp.body),

@@ -129,7 +129,19 @@ This is a feature that OverpassQL cannot do without some emulation. So what we d
 4. If there is an else clause, use a conditional filter with the negation of the test given to get a one item or zero item `Set()`
 5. Iterate over the else clause in a for loop
 
-That would be why I say that some of these operations are less efficient than their Python counterparts.
+## Settings
+
+We also provide a wrapper for the option headers. Note that this will raise an error if it's not on the first line of your query.
+
+The valid keywords for `Settings()` are as follows:
+
+* `timeout`: The maximum number of seconds you would like your query to run for
+* `maxsize`: The maximum number of bytes you would like your query to return
+* `out`: The format to return in. It defaults to XML, but you can set it to `"json"` or a variant on `"csv"`, as described [in the OverpassQL spec](http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Output_Format_.28out.29)
+* `bbox`: The string describing a global bounding box. It is used to limit the area your query can encompass, and should take the form `"<southern lat>,<western lon>,<northern lat>,<eastern lon>"`
+* `date`: The string describing what date you would like to query for. This allows you to look at past database states. Note that it needs an extra set of quotes, so it would look like `date='"2012-09-12T06:55:00Z"'`
+* `diff`: Similar to the above, except it will return the difference between that query run at each time. If you give one time, it will assume you want to compare to now. It would look like `diff='"2012-09-12T06:55:00Z","2014-12-24T13:33:00Z"'`
+* `adiff`: Similar to the above, except that it tells you what happened to each absent element
 
 ## Rough Translation Table
 
