@@ -71,12 +71,18 @@ def _(name, **kwargs):
 
 
 @parse.register(_ast.BinOp)
-def _(binary_operation, **kwargs):
+@parse.register(_ast.BoolOp)
+def _(operation, **kwargs):
     return parse(
-        binary_operation.op,
-        left=binary_operation.left,
-        right=binary_operation.right
+        operation.op,
+        left=operation.left,
+        right=operation.right
     )
+
+
+@parse.register(_ast.UnaryOp)
+def _(operation, **kwargs):
+    return parse(operation.op, value=operation.operand)
 
 
 @parse.register(_ast.Add)  # TODO: make work with count()
@@ -115,6 +121,28 @@ def _(_, **kwargs):
             return '({}; - {})'.format(left, right)
         else:
             raise TypeError('You cannot subtract a number from a set')
+
+
+@parse.register(_ast.Mult)  # TODO: make work with count()
+def _(_, **kwargs):
+    left, right = parse(kwargs['left']), parse(kwargs['right'])
+    return '{} * {}'.format(left, right)
+
+
+@parse.register(_ast.Div)  # TODO: make work with count()
+def _(_, **kwargs):
+left, right = parse(kwargs['left']), parse(kwargs['right'])
+return '{} / {}'.format(left, right)
+
+
+@parse.register(_ast.USub)
+def _(_, **kwargs):
+    return "-{}".format(parse(kwargs['value']))
+
+
+@parse.register(_ast.Not)
+def _(_, **kwargs):
+return "!{}".format(parse(kwargs['value']))
 
 
 @parse.register(_ast.keyword)
