@@ -125,6 +125,8 @@ def _(call, **kwargs):
         return '({})'.format('; '.join(parse(arg) for arg in call.args))
     elif name in {'Way', 'Node', 'Area', 'Relation'}:
         return call_constructor(call, name)
+    elif name == 'Regex':
+        return 'Regex({})'.format(parse(call.args[0]))
     else:
         raise NameError('{} is not the name of a valid Overpass type'.format(name))
 
@@ -237,6 +239,8 @@ def call_constructor(call, name):
                 tags += '[!"{}"]'.format(key)
             elif value == ...:
                 tags += '["{}"]'.format(key)
+            elif value.startswith('Regex('):
+                tags += '["{}"~{}]'.format(key, value[6:-1])
             else:
                 tags += '["{}"="{}"]'.format(key, value)
         try:
