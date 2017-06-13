@@ -38,6 +38,8 @@ I'll say this from the outset: `overpassify` will support a subset of Python. So
 
 On the other hand, it will try to support a superset of easily-usable OverpassQL. Some of those extra features won't be as efficient as their Python counterparts, but they will be available.
 
+Currently `overpassify` supports 28/56 of the features listed in the OverpassQL guide, and additionally supports ternary and `if` blocks.
+
 ## Classes
 
 This library provides wrappers for five types. `Set()`, `Node()`, `Way()`, `Area()`, and `Relation()`. Those last four are *all* considered subclasses of `Set()`.
