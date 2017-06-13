@@ -11,7 +11,7 @@ from overpassify import overpassify
 @overpassify
 def query():
     search = Area(3600134503)
-    ways = Way(search)
+    ways = Way(search, highway=...)
     nodes = Node(search)
     out(ways, geom=True, count=True)
     out(nodes, geom=True, count=True)
@@ -22,7 +22,7 @@ And from that generate:
 
 ```OverpassQL
 (area(3600134503);) -> .search;
-(way(area.search);) -> .ways;
+(way["highway"](area.search);) -> .ways;
 (node(area.search);) -> .nodes;
 .ways out count;
 .ways out geom;
@@ -40,7 +40,7 @@ On the other hand, it will try to support a superset of easily-usable OverpassQL
 
 ## Classes
 
-This library provides wrappers for five types. `Set()`, `Node()`, `Way()`, `Area()`, and `Relation()`. Those last four are *all* subsets of `Set()`.
+This library provides wrappers for five types. `Set()`, `Node()`, `Way()`, `Area()`, and `Relation()`. Those last four are *all* considered subclasses of `Set()`.
 
 This library also provides support for strings and numbers. In the future it will provide support for regex and other things in specific places.
 
@@ -51,7 +51,7 @@ This library also provides support for strings and numbers. In the future it wil
 This works about the way you'd expect it to. There are a couple caveats though.
 
 1. You cannot assign a non-`Set()` to a variable. This means only those five classes listed above.
-2. You cannot assign multiple variables in one line. No `a, b = b, a`, and the like.
+2. You cannot assign multiple variables in one line. No `a, b = b, a`, and the like. This could *potentially* be changed later.
 
 ## Number and Set Arithmetic
 
@@ -67,7 +67,7 @@ You are also allowed to filter a `Set()`'s contents by type. For instance, `Way.
 
 ## Set intersections
 
-A similar process will allow you to take the intersection of arbitrary numbers of **named** sets. So `Set.intersect(a, b)` will yield all elements common between `a` and `b`.
+A similar process will allow you to take the intersection of arbitrary numbers of **named** sets. So `Set.intersect(a, b)` will yield all elements common between `a` and `b`. You cannot, at the moment, use an expression inside this function. It **must** be predefined.
 
 You can also use this in tandem with Set Filtering. So `Area.intersect(a, b)` would yield only the areas common between `a` and `b`.
 
