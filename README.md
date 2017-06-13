@@ -165,3 +165,33 @@ The valid keywords for `Settings()` are as follows:
 | If Statement       | very long                         | `if <condition>:\n    <body>\nelse:\n    <body>` |
 
 \* `overpassify` will allow for mixed sets here by repeating for each type. This may be optimized better in the future.
+
+## Features Not Yet Implemented
+
+1. Recursion Queries
+    1. Recurse Up
+    2. Recurse Up Relations
+    3. Recurse Down
+    4. Recurse Down Relations
+2. Filters
+    1. is_in Queries
+    2. Key Regex
+    3. Recursion Functions
+        1.
+    4. Filter By Bounding Box
+    5. Filter By Polygon
+    6. Filter By "newer"
+    7. Filter By Date Of Change
+    8. Filter By User
+    9. Filter By Area Pivot
+3. ID Evaluators
+    1. id() And type()
+    2. is_tag() And Tag Fetching
+    3. Property Count Functions
+4. Aggregators
+    1. Union and Set
+    2. Min and Max
+    3. Sum
+    4. Statistical Counts
+5. Number Normalizer
+6. Date Normalizer
