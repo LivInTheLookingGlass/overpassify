@@ -131,8 +131,20 @@ def _(_, **kwargs):
 
 @parse.register(_ast.Div)  # TODO: make work with count()
 def _(_, **kwargs):
-left, right = parse(kwargs['left']), parse(kwargs['right'])
-return '{} / {}'.format(left, right)
+    left, right = parse(kwargs['left']), parse(kwargs['right'])
+    return '{} / {}'.format(left, right)
+
+
+@parse.register(_ast.And)
+def _(_, **kwargs):
+    left, right = parse(kwargs['left']), parse(kwargs['right'])
+    return '{} && {}'.format(left, right)
+
+
+@parse.register(_ast.Or)
+def _(_, **kwargs):
+    left, right = parse(kwargs['left']), parse(kwargs['right'])
+    return '{} || {}'.format(left, right)
 
 
 @parse.register(_ast.USub)
@@ -142,7 +154,7 @@ def _(_, **kwargs):
 
 @parse.register(_ast.Not)
 def _(_, **kwargs):
-return "!{}".format(parse(kwargs['value']))
+    return "!{}".format(parse(kwargs['value']))
 
 
 @parse.register(_ast.Compare)
