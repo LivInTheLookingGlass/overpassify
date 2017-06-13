@@ -212,9 +212,7 @@ def _(call, **kwargs):
         return overpasstype + parse(call.args[0])
     elif name == 'out':
         return call_out(call)
-    elif name == 'Set':
-        return '({})'.format('; '.join(parse(arg) for arg in call.args))
-    elif name in {'Way', 'Node', 'Area', 'Relation'}:
+    elif name in {'Set', 'Way', 'Node', 'Area', 'Relation'}:
         return call_constructor(call, name)
     elif name == 'Regex':
         return 'Regex({})'.format(parse(call.args[0]))
@@ -324,19 +322,24 @@ def _(const, **kwargs):
     return const.value
 
 
+def parse_tags(filters):
+    if value is None:
+        return '[!"{}"]'.format(key)
+    elif value == (...):
+        return '["{}"]'.format(key)
+    elif value.startswith('Regex('):
+        return '["{}"~{}]'.format(key, value[6:-1])
+    elif value.startswith('NotRegex('):
+        return '["{}"!~{}]'.format(key, value[9:-1])
+    else:
+        return '["{}"="{}"]'.format(key, value)
+
+
 def call_constructor(call, name):
+    if name == 'Set':
+        return '({})'.format('; '.join(parse(arg) for arg in call.args))
     overpasstype = (name.split('.')[0]).lower()
-    filters = (parse(kwarg) for kwarg in call.keywords)
-    tags = ""
-    for key, value in filters:
-        if value is None:
-            tags += '[!"{}"]'.format(key)
-        elif value == ...:
-            tags += '["{}"]'.format(key)
-        elif value.startswith('Regex('):
-            tags += '["{}"~{}]'.format(key, value[6:-1])
-        else:
-            tags += '["{}"="{}"]'.format(key, value)
+    tags = "".join(parse_tags(*parse(kwarg)) for kwarg in call.keywords)
     if len(call.args) == 1:
         arg = parse(call.args[0])
         if arg.startswith('around'):

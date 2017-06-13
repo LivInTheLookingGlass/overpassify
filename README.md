@@ -177,7 +177,6 @@ The valid keywords for `Settings()` are as follows:
     1. is_in Queries
     2. Key Regex
     3. Recursion Functions
-        1.
     4. Filter By Bounding Box
     5. Filter By Polygon
     6. Filter By "newer"
