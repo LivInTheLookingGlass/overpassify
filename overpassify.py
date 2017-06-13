@@ -145,6 +145,45 @@ def _(_, **kwargs):
 return "!{}".format(parse(kwargs['value']))
 
 
+@parse.register(_ast.Compare)
+def _(comp, **kwargs):
+    return parse(
+        comp.ops[0],
+        left=comp.left,
+        right=comp.comparators[0]
+    )
+
+
+@parse.register(_ast.Eq)
+def _(_, **kwargs):
+    return "{} == {}".format(parse(kwargs['left']), parse(kwargs['right']))
+
+
+@parse.register(_ast.NotEq)
+def _(_, **kwargs):
+    return "{} != {}".format(parse(kwargs['left']), parse(kwargs['right']))
+
+
+@parse.register(_ast.GtE)
+def _(_, **kwargs):
+    return "{} >= {}".format(parse(kwargs['left']), parse(kwargs['right']))
+
+
+@parse.register(_ast.Gt)
+def _(_, **kwargs):
+    return "{} > {}".format(parse(kwargs['left']), parse(kwargs['right']))
+
+
+@parse.register(_ast.LtE)
+def _(_, **kwargs):
+    return "{} <= {}".format(parse(kwargs['left']), parse(kwargs['right']))
+
+
+@parse.register(_ast.Lt)
+def _(_, **kwargs):
+    return "{} < {}".format(parse(kwargs['left']), parse(kwargs['right']))
+
+
 @parse.register(_ast.keyword)
 def _(keyword, **kwargs):
     return keyword.arg, parse(keyword.value)
