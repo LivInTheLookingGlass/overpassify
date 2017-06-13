@@ -12,6 +12,11 @@ def overpassify(query):
     raise TypeError('Overpassify does not support {}.'.format(type(query)))
 
 
+@overpassify.register(list)
+def _(funcbody):
+    return parse(funcbody)
+
+
 @overpassify.register(str)
 def _(source):
     return parse(source)
@@ -33,7 +38,11 @@ def parse(source, **kwargs):
 
 @parse.register(str)
 def _(source, **kwargs):
-    tree = ast.parse(source).body[0].body
+    return parse(ast.parse(source).body[0].body)
+
+
+@parse.register(list)
+def _(tree, **kwargs):
     options = ''
     if isinstance(tree[0], _ast.Expr) and isinstance(tree[0].value, _ast.Call):
         # test for Settings()
@@ -46,7 +55,7 @@ def _(source, **kwargs):
                 else:
                     options += '[{}:{}]\n'.format(key, value)
             tree = tree[1:]
-    return options + '\n'.join(parse(expr) for expr in tree)
+    return options + '\n'.join(parse(expr) for expr in transform(tree))
 
 
 @parse.register(_ast.Assign)
@@ -270,30 +279,6 @@ def _(ifExp, **kwargs):
         )
 
 
-@parse.register(_ast.If)
-def _(ifBlock, **kwargs):
-    tmpname = TMP_PREFIX + 'if'
-    test = parse(ifBlock.test)
-    ret = '''(relation(2186646);) -> .{tmpname};
-    (relation.{tmpname}(if: {test});) -> .{tmpname}body;
-    foreach.{tmpname}body(
-        {body});'''.format(
-        tmpname=tmpname,
-        test=test,
-        body='\n        '.join(parse(expr) for expr in ifBlock.body)
-    )
-    if len(ifBlock.orelse) > 0:
-        ret += '''
-        (relation.{tmpname}(if: !({test}));) -> .{tmpname}else;
-        foreach.{tmpname}else(
-            {body});'''.format(
-            tmpname=tmpname,
-            test=test,
-            body='\n        '.join(parse(expr) for expr in ifBlock.orelse)
-        )
-    return ret
-
-
 @parse.register(_ast.For)
 def _(forExp, **kwargs):
     collection = parse(forExp.iter)
@@ -307,7 +292,7 @@ def _(forExp, **kwargs):
         {body});'''.format(
         collection=collection,
         slot=slot,
-        body=";\n".join(parse(expr) for expr in forExp.body),
+        body="\n".join(parse(expr) for expr in forExp.body),
         tmpfor=tmpfor
     )
 
