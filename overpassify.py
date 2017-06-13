@@ -60,17 +60,49 @@ def _(name, **kwargs):
 
 @parse.register(_ast.BinOp)
 def _(binary_operation, **kwargs):
-    return parse(binary_operation.op, left=left, right=right)
+    return parse(
+        binary_operation.op,
+        left=binary_operation.left,
+        right=binary_operation.right
+    )
 
 
-@parse.register(_ast.Add)
+@parse.register(_ast.Add)  # TODO: make work with count()
 def _(_, **kwargs):
-    return '({}; {})'.format(parse(kwargs['left']), parse(kwargs['right']))
+    left, right = parse(kwargs['left']), parse(kwargs['right'])
+    try:
+        float(left)
+        try:
+            float(right)
+            return '{} + {}'.format(left, right)
+        except ValueError:
+            raise TypeError('You cannot add a number to a set')
+    except ValueError:
+        try:
+            float(right)
+        except ValueError:
+            return '({}; {})'.format(left, right)
+        else:
+            raise TypeError('You cannot add a set to a number')
 
 
-@parse.register(_ast.Sub)
+@parse.register(_ast.Sub)  # TODO: make work with count()
 def _(_, **kwargs):
-    return '({} - {};)'.format(kwargs['left'], kwargs['right'])
+    left, right = parse(kwargs['left']), parse(kwargs['right'])
+    try:
+        float(left)
+        try:
+            float(right)
+            return '{} - {}'.format(left, right)
+        except ValueError:
+            raise TypeError('You cannot subtract a set from a number')
+    except ValueError:
+        try:
+            float(right)
+        except ValueError:
+            return '({}; - {})'.format(left, right)
+        else:
+            raise TypeError('You cannot subtract a number from a set')
 
 
 @parse.register(_ast.keyword)
@@ -88,55 +120,11 @@ def _(call, **kwargs):
         overpasstype = (name.split('.')[0]).lower()
         return overpasstype + parse(call.args[0])
     elif name == 'out':
-        if len(call.args) == 0:
-            element = '._'
-        else:
-            element = parse(call.args[0])
-        out_channels = {parse(kwarg)[0] for kwarg in call.keywords}
-        ret = ''
-        if 'count' in out_channels:
-            ret += element + ' out count;\n'
-            out_channels.remove('count')
-            if len(out_channels) == 0:
-                return ret
-        return ret + element + ' out {};'.format(' '.join(out_channels))
+        return call_out(call)
     elif name == 'Set':
-        return '({})'.format(
-            '; '.join((parse(arg) for arg in call.args))
-        )
+        return '({})'.format('; '.join(parse(arg) for arg in call.args))
     elif name in {'Way', 'Node', 'Area', 'Relation'}:
-        overpasstype = (name.split('.')[0]).lower()
-        if len(call.args) == 1:
-            arg = parse(call.args[0])
-            filters = (parse(kwarg) for kwarg in call.keywords)
-            tags = ""
-            for key, value in filters:
-                if value is None:
-                    tags += '[!"{}"]'.format(key)
-                elif value == ...:
-                    tags += '["{}"]'.format(key)
-                else:
-                    tags += '["{}"="{}"]'.format(key, value)
-            try:
-                int(arg)
-                return '{}{}({})'.format(
-                    overpasstype,
-                    tags,
-                    arg
-                )
-            except Exception:
-                return '{}{}({})'.format(
-                    overpasstype,
-                    tags,
-                    'area' + arg
-                )
-        elif len(call.args) == 0:
-            return '{}{}'.format(
-                overpasstype,
-                ''.join('[{}={}]'.format(*parse(kwarg)) for kwarg in call.keywords)
-            )
-        else:
-            raise IndexError('Calls to locators do not support multiple positional arguments')
+        return call_constructor(call, name)
     else:
         raise NameError('{} is not the name of a valid Overpass type'.format(name))
 
@@ -153,7 +141,7 @@ def _(string, **kwargs):
 
 @parse.register(_ast.Num)
 def _(num, **kwargs):
-    return "{}".format(num.n)
+    return repr(num.n)
 
 
 @parse.register(_ast.IfExp)
@@ -236,3 +224,53 @@ def _(e, **kwargs):
 @parse.register(_ast.NameConstant)
 def _(const, **kwargs):
     return const.value
+
+
+def call_constructor(call, name):
+    overpasstype = (name.split('.')[0]).lower()
+    if len(call.args) == 1:
+        arg = parse(call.args[0])
+        filters = (parse(kwarg) for kwarg in call.keywords)
+        tags = ""
+        for key, value in filters:
+            if value is None:
+                tags += '[!"{}"]'.format(key)
+            elif value == ...:
+                tags += '["{}"]'.format(key)
+            else:
+                tags += '["{}"="{}"]'.format(key, value)
+        try:
+            int(arg)
+            return '{}{}({})'.format(
+                overpasstype,
+                tags,
+                arg
+            )
+        except Exception:
+            return '{}{}({})'.format(
+                overpasstype,
+                tags,
+                'area' + arg
+            )
+    elif len(call.args) == 0:
+        return '{}{}'.format(
+            overpasstype,
+            ''.join('[{}={}]'.format(*parse(kwarg)) for kwarg in call.keywords)
+        )
+    else:
+        raise IndexError('Calls to locators do not support multiple positional arguments')
+
+
+def call_out(call):
+    if len(call.args) == 0:
+        element = '._'
+    else:
+        element = parse(call.args[0])
+    out_channels = {parse(kwarg)[0] for kwarg in call.keywords}
+    ret = ''
+    if 'count' in out_channels:
+        ret += element + ' out count;\n'
+        out_channels.remove('count')
+        if len(out_channels) == 0:
+            return ret
+    return ret + element + ' out {};'.format(' '.join(out_channels))
