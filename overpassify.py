@@ -108,17 +108,26 @@ def _(call, **kwargs):
         overpasstype = (name.split('.')[0]).lower()
         if len(call.args) == 1:
             arg = parse(call.args[0])
+            filters = (parse(kwarg) for kwarg in call.keywords)
+            tags = ""
+            for key, value in filters:
+                if value is None:
+                    tags += '[!"{}"]'.format(key)
+                elif value == ...:
+                    tags += '["{}"]'.format(key)
+                else:
+                    tags += '["{}"="{}"]'.format(key, value)
             try:
                 int(arg)
                 return '{}{}({})'.format(
                     overpasstype,
-                    ''.join('[{}={}]'.format(*parse(kwarg)) for kwarg in call.keywords),
+                    tags,
                     arg
                 )
             except Exception:
                 return '{}{}({})'.format(
                     overpasstype,
-                    ''.join('[{}={}]'.format(*parse(kwarg)) for kwarg in call.keywords),
+                    tags,
                     'area' + arg
                 )
         elif len(call.args) == 0:
@@ -158,8 +167,7 @@ def _(ifExp, **kwargs):
         return '''{expr1} -> {name};
         (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
         {expr2} -> {tmpname};
-        ({name}; way{tmpname}(if: !({condition})); area{tmpname}(if: !({condition})); node{tmpname}(if: !({condition})); relation{tmpname}(if: !({condition}));) -> {name};
-        '''.format(
+        ({name}; way{tmpname}(if: !({condition})); area{tmpname}(if: !({condition})); node{tmpname}(if: !({condition})); relation{tmpname}(if: !({condition}));) -> {name};'''.format(
             expr1=expr1,
             expr2=expr2,
             name=name,
@@ -168,8 +176,7 @@ def _(ifExp, **kwargs):
         )
     else:
         return '''{expr1} -> {name};
-        (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
-        '''.format(
+        (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};'''.format(
             expr1=expr1,
             name=name,
             condition=condition
@@ -219,3 +226,13 @@ def _(forExp, **kwargs):
         body=";\n".join(parse(expr) for expr in forExp.body),
         tmpfor=tmpfor
     )
+
+
+@parse.register(_ast.Ellipsis)
+def _(e, **kwargs):
+    return ...
+
+
+@parse.register(_ast.NameConstant)
+def _(const, **kwargs):
+    return const.value
