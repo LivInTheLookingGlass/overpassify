@@ -127,6 +127,14 @@ def _(call, **kwargs):
         return call_constructor(call, name)
     elif name == 'Regex':
         return 'Regex({})'.format(parse(call.args[0]))
+    elif name == 'Around':
+        args = (parse(arg) for arg in call.args)
+        if len(call.args) == 1:
+            return 'around:{}'.format(*args)
+        elif len(call.args) == 2:
+            return 'around{}:{}'.format(*args)
+        else:
+            return 'around:{},{},{}'.format(*args)
     else:
         raise NameError('{} is not the name of a valid Overpass type'.format(name))
 
@@ -230,37 +238,39 @@ def _(const, **kwargs):
 
 def call_constructor(call, name):
     overpasstype = (name.split('.')[0]).lower()
+    filters = (parse(kwarg) for kwarg in call.keywords)
+    tags = ""
+    for key, value in filters:
+        if value is None:
+            tags += '[!"{}"]'.format(key)
+        elif value == ...:
+            tags += '["{}"]'.format(key)
+        elif value.startswith('Regex('):
+            tags += '["{}"~{}]'.format(key, value[6:-1])
+        else:
+            tags += '["{}"="{}"]'.format(key, value)
     if len(call.args) == 1:
         arg = parse(call.args[0])
-        filters = (parse(kwarg) for kwarg in call.keywords)
-        tags = ""
-        for key, value in filters:
-            if value is None:
-                tags += '[!"{}"]'.format(key)
-            elif value == ...:
-                tags += '["{}"]'.format(key)
-            elif value.startswith('Regex('):
-                tags += '["{}"~{}]'.format(key, value[6:-1])
-            else:
-                tags += '["{}"="{}"]'.format(key, value)
-        try:
-            int(arg)
+        if arg.startswith('around'):
+            return '{}{}(around{})'.format(
+                overpasstype,
+                tags,
+                arg[6:]
+            )
+        elif arg.isnumeric():
             return '{}{}({})'.format(
                 overpasstype,
                 tags,
                 arg
             )
-        except Exception:
+        else:
             return '{}{}({})'.format(
                 overpasstype,
                 tags,
                 'area' + arg
             )
     elif len(call.args) == 0:
-        return '{}{}'.format(
-            overpasstype,
-            ''.join('[{}={}]'.format(*parse(kwarg)) for kwarg in call.keywords)
-        )
+        return '{}{}'.format(overpasstype, tags)
     else:
         raise IndexError('Calls to locators do not support multiple positional arguments')
 

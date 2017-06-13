@@ -82,6 +82,8 @@ This library also supports *most* of the ways OverpassQL can search for informat
 
 The first two are just given as arguments to the constructor. If you put in `Way(12345)`, that will find the Way with ID 12345. If you put in `Way(<some area>)`, it will return all ways within that area.
 
+You can also define areas using the `Around()` function. This has two useful overloads. The first takes the form `Around(<some set>, <radius in meters>)`. The second takes the form `Around(<radius in meters>, <latitude>, <longitude>)`.
+
 Tag matching can be done with keyword arguments. So if you look for `Node(highway="stop")`, that will find you all stop signs. It also supports existence checking (`Way(highway=...)`), and non-existence checking (`Area(landuse=None)`), and regex matching (`Way(highway=Regex("path|cycleway|sidewalk"))`).
 
 You can also search by both an area and a filter. For instance: `Way(<your hometown>, maxspeed=None)`.
