@@ -1,6 +1,7 @@
 import ast, _ast
 from functools import singledispatch
 from inspect import getsource
+from random import randint
 from types import FunctionType
 
 from dill.source import getsource as dillgetsource
@@ -288,7 +289,7 @@ def _(forExp, **kwargs):
     orelse = forExp.orelse
     if len(orelse) > 0:
         raise SyntaxError("overpassify does not yet support for-each-if")
-    tmpfor = TMP_PREFIX + 'for'
+    tmpfor = TMP_PREFIX + 'for{}'.format(randint(0, 2**32))
     return '''({collection};) -> .{tmpfor};
     foreach.{tmpfor}->{slot}(
         {body});'''.format(
