@@ -263,9 +263,9 @@ def _(ifExp, **kwargs):
     condition = parse(ifExp.test)
     if expr2 != '()':
         tmpname = '.' + TMP_PREFIX + name[1:]
-        return '''{expr1} -> {name};
+        return '''({expr1};) -> {name};
         (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
-        {expr2} -> {tmpname};
+        ({expr2};) -> {tmpname};
         ({name}; way{tmpname}(if: !({condition})); area{tmpname}(if: !({condition})); node{tmpname}(if: !({condition})); relation{tmpname}(if: !({condition}));) -> {name};'''.format(
             expr1=expr1,
             expr2=expr2,
@@ -274,7 +274,7 @@ def _(ifExp, **kwargs):
             condition=condition
         )
     else:
-        return '''{expr1} -> {name};
+        return '''({expr1};) -> {name};
         (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};'''.format(
             expr1=expr1,
             name=name,
