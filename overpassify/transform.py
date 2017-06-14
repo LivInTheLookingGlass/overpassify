@@ -92,8 +92,9 @@ def _(item, item_class):
             return True
 
 
-def transform_break(item):
-    name = 'tmpbreak{}'.format(randint(0, 2**32))
+def transform_break(item, name=''):
+    if name == '':
+        name = 'tmpbreak{}'.format(randint(0, 2**32))
     assignment = ast.parse('{} = Relation(2186646)'.format(name)).body[0]
     condition = ast.parse('for _ in {}: a()'.format(name)).body[0]
     body = [assignment, item]
@@ -101,7 +102,7 @@ def transform_break(item):
     for statement in item.body:
         cond = deepcopy(condition)
         if isinstance(statement, _ast.If):
-            statement = transform_break(statement)[1]
+            statement = transform_break(statement, name=name)[1]
         elif isinstance(statement, _ast.Break):
             statement = ast.parse('{name} = Way.filter({name})'.format(name=name)).body[0]
         cond.body = [statement]
@@ -110,8 +111,9 @@ def transform_break(item):
     return body
 
 
-def transform_continue(item):
-    name = 'tmpcontinue{}'.format(randint(0, 2**32))
+def transform_continue(item, name=''):
+    if name == '':
+        name = 'tmpcontinue{}'.format(randint(0, 2**32))
     assignment = ast.parse('{} = Relation(2186646)'.format(name)).body[0]
     condition = ast.parse('for _ in {}: a()'.format(name)).body[0]
     body = [item]
@@ -119,7 +121,7 @@ def transform_continue(item):
     for statement in item.body:
         cond = deepcopy(condition)
         if isinstance(statement, _ast.If):
-            statement = transform_break(statement)[1]
+            statement = transform_continue(statement, name=name)[1]
         elif isinstance(statement, _ast.Continue):
             statement = ast.parse('{name} = Way.filter({name})'.format(name=name)).body[0]
         cond.body = [statement]

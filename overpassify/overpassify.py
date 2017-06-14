@@ -310,7 +310,7 @@ def _(const, **kwargs):
     return const.value
 
 
-def parse_tags(filters):
+def parse_tags(key, value):
     if value is None:
         return '[!"{}"]'.format(key)
     elif value == (...):
