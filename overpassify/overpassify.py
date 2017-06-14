@@ -217,7 +217,7 @@ def _(keyword, **kwargs):
 def _(call, **kwargs):
     name = parse(call.func)[1:]
     if name.endswith('.intersect'):
-        overpasstype = (name.split('.')[0]).replace('set', '').lower()
+        overpasstype = (name.split('.')[0]).replace('Set', '').lower()
         return overpasstype + ''.join((parse(arg) for arg in call.args))
     elif name.endswith('.filter'):
         overpasstype = (name.split('.')[0]).lower()
