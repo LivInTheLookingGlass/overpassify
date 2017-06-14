@@ -55,7 +55,8 @@ OverpassQL. Some of those extra features won't be as efficient as their
 Python counterparts, but they will be available.
 
 Currently ``overpassify`` supports 35/56 of the features listed in the
-OverpassQL guide, and additionally supports ternary and ``if`` blocks.
+OverpassQL guide, and additionally supports ternary, ``if`` blocks,
+``break``, and ``continue``.
 
 Classes
 -------
@@ -190,8 +191,9 @@ Here you can use the traditional Python for loop:
     for way in ways:
         out(way, geom=True)
 
-It does not yet support the else clause, and I'm not certain that it
-will, as there isn't a ``break`` equivalent in OverpassQL.
+It does not yet support the else clause, and though it supports ``break`` and
+``continue``, please be aware that this will dramatically slow runtime in that
+loop.
 
 If Statements
 -------------
