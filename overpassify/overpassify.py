@@ -5,6 +5,8 @@ from types import FunctionType
 
 from dill.source import getsource as dillgetsource
 
+from .transform import transform
+
 TMP_PREFIX = 'tmp'
 
 @singledispatch

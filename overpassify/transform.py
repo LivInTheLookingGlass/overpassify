@@ -3,17 +3,20 @@ from copy import copy
 from functools import singledispatch
 from random import randint
 
+from pprint import pprint
+
 TMP_PREFIX = 'tmp'
 
 
 def transform(body):
     changed = True
+   # print(id(body))
     transformed = []
+    pprint(body)
     while changed:
-        changed = False
-        for statement in body:
-            changed = changed or _transform(statement, body=transformed, top=True)
+        changed = _transform(body, body=transformed, top=True)
         body, transformed = transformed, []
+        pprint(body)
     return body
 
 
@@ -21,6 +24,29 @@ def transform(body):
 def _transform(item, body=None, top=False):
     if top:
         body.append(copy(item))
+    return False
+
+
+@_transform.register(list)
+def _(item, body=None, top=False):
+    changed = False
+   # print("iterating")
+    for statement in item:
+       # print(statement)
+        changed = _transform(statement, body=body, top=True) or changed
+    return changed
+
+
+@_transform.register(_ast.For)
+def _(item, body=None, top=False):
+    new_body = []
+   # print(id(new_body))
+    if _transform(item.body, body=new_body, top=True):
+        item.body = new_body
+        body.append(item)
+        return True
+    elif top:
+        body.append(item)
     return False
 
 
