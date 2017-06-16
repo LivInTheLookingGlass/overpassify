@@ -108,6 +108,11 @@ def transform_break(item, name=''):
         cond.body = [statement]
         new_body.append(cond)
     item.body = new_body
+    if len(item.orelse) > 0:
+        assignment = ast.parse('{}else = Relation(2186646)'.format(name)).body[0]
+        didbreak = ast.parse('for _ in {}: a()'.format(name)).body[0]
+        didbreak.body = ast.parse('{} = Way.filter({})'.format(name, name)).body[0]
+        body += [assignment, didbreak]
     return body
 
 
