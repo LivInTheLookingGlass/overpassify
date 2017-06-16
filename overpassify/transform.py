@@ -73,6 +73,44 @@ def _(item, body=None, top=False):
     return True
 
 
+@_transform.register(_ast.Expr)
+def _(item, body=None, top=False):
+    new_body = []
+    if _transform(item.value, body=new_body, top=top):
+        body.extend(new_body)
+        return True
+    else:
+        body.append(item)
+        return False
+
+
+@_transform.register(_ast.Assign)
+def _(item, body=None, top=False):
+    new_body = []
+    if _transform(item.value, body=new_body, top=top):
+        item.value = new_body[-1]
+        new_body = new_body[:-1] + [item]
+        body.extend(new_body)
+        return True
+    else:
+        body.append(item)
+        return False
+
+
+@_transform.register(_ast.Call)
+def _(item, body=None, top=False):
+    if top:
+        if isinstance(item.args[0], _ast.Call):
+            _transform(item.args[0], body=body, top=top)
+        if not isinstance(item.args[0], (_ast.Name, _ast.Num)):
+            syntax = ast.parse('tmpcall{} = b'.format(randint(0, 2**32))).body[0]
+            syntax.value = item.args[0]
+            item.args[0] = syntax.targets[0]
+            body.extend((syntax, item))
+            return True
+    return False
+
+
 @singledispatch
 def scan(body, item_class):
     return False
