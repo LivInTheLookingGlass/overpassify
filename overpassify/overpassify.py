@@ -310,6 +310,14 @@ def _(const, **kwargs):
     return const.value
 
 
+@parse.register(_ast.Subscript)
+def _(expr, **kwargs):
+    return "{}[{}]".format(
+        parse(expr.value)[1:],
+        parse(expr.slice.value)
+    )
+
+
 def parse_tags(key, value):
     if value is None:
         return '[!"{}"]'.format(key)
