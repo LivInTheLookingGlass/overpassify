@@ -48,7 +48,7 @@ def _(item, body=None, top=False):
         body.append(item)
         return True
     elif not isinstance(item.iter, _ast.Name):
-        syntax = ast.parse('tmpfor{} = _'.format(randint(0, 2**32)))
+        syntax = ast.parse('tmpfor{} = _'.format(randint(0, 2**32))).body[0]
         syntax.value = item.iter
         item.iter = syntax.targets[0]
         body.extend((syntax, item))
