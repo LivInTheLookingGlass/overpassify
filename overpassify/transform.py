@@ -11,11 +11,11 @@ TMP_PREFIX = 'tmp'
 def transform(body):
     changed = True
     transformed = []
-    pprint(body)
+    # pprint(body)
     while changed:
         changed = _transform(body, body=transformed, top=True)
         body, transformed = transformed, []
-        pprint(body)
+        # pprint(body)
     return body
 
 
@@ -36,20 +36,25 @@ def _(item, body=None, top=False):
 
 @_transform.register(_ast.For)
 def _(item, body=None, top=False):
+    new_body = []
     if scan(item.body, _ast.Break):
         body.extend(transform_break(item))
         return True
     elif scan(item.body, _ast.Continue):
         body.extend(transform_continue(item))
         return True
-    else:
-        new_body = []
-        if _transform(item.body, body=new_body, top=True):
-            item.body = new_body
-            body.append(item)
-            return True
-        elif top:
-            body.append(item)
+    elif _transform(item.body, body=new_body, top=True):
+        item.body = new_body
+        body.append(item)
+        return True
+    elif not isinstance(item.iter, _ast.Name):
+        syntax = ast.parse('tmpfor{} = _'.format(randint(0, 2**32)))
+        syntax.value = item.iter
+        item.iter = syntax.targets[0]
+        body.extend((syntax, item))
+        return True
+    elif top:
+        body.append(item)
         return False
 
 
@@ -99,7 +104,7 @@ def _(item, body=None, top=False):
 
 @_transform.register(_ast.Call)
 def _(item, body=None, top=False):
-    if top:
+    if top and len(item.args) != 0:
         if isinstance(item.args[0], _ast.Call):
             _transform(item.args[0], body=body, top=top)
         if not isinstance(item.args[0], (_ast.Name, _ast.Num)):
@@ -149,8 +154,11 @@ def transform_break(item, name=''):
     if len(item.orelse) > 0:
         assignment = ast.parse('{}else = Relation(2186646)'.format(name)).body[0]
         didbreak = ast.parse('for _ in {}: a()'.format(name)).body[0]
-        didbreak.body = ast.parse('{} = Way.filter({})'.format(name, name)).body[0]
-        body += [assignment, didbreak]
+        didbreak.body = ast.parse('{}else = Way.filter({})'.format(name, name)).body
+        condition = ast.parse('for _ in {}else: a()'.format(name)).body[0]
+        condition.body = item.orelse
+        body += [assignment, didbreak, condition]
+        item.orelse = []
     return body
 
 

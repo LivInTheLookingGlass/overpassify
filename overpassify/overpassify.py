@@ -286,17 +286,11 @@ def _(ifExp, **kwargs):
 def _(forExp, **kwargs):
     collection = parse(forExp.iter)
     slot = parse(forExp.target)
-    orelse = forExp.orelse
-    if len(orelse) > 0:
-        raise SyntaxError("overpassify does not yet support for-each-if")
-    tmpfor = TMP_PREFIX + 'for{}'.format(randint(0, 2**32))
-    return '''({collection};) -> .{tmpfor};
-    foreach.{tmpfor}->{slot}(
+    return '''foreach{collection}->{slot}(
         {body});'''.format(
         collection=collection,
         slot=slot,
-        body="\n".join(parse(expr) for expr in forExp.body),
-        tmpfor=tmpfor
+        body="\n".join(parse(expr) for expr in forExp.body)
     )
 
 
