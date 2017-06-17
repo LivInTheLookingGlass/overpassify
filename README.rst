@@ -54,7 +54,7 @@ On the other hand, it will try to support a superset of easily-usable
 OverpassQL. Some of those extra features won't be as efficient as their
 Python counterparts, but they will be available.
 
-Currently ``overpassify`` supports 35/56 of the features listed in the
+Currently ``overpassify`` supports 36/56 of the features listed in the
 OverpassQL guide, and additionally supports ternary, ``if`` blocks,
 ``break``, and ``continue``.
 
