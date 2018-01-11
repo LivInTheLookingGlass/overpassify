@@ -1,17 +1,33 @@
-import ast, _ast
+import ast
+import _ast
 from functools import singledispatch
 from inspect import getsource
 from random import randint
 from types import FunctionType
 
-from dill.source import getsource as dillgetsource
+try:
+    from dill.source import getsource as dillgetsource
+except ImportError:
+    from warnings import warn
+    warn("Could not import dill. No fallback available for source fetching")
 
 from .transform import transform
 
 TMP_PREFIX = 'tmp'
 
+
 @singledispatch
 def overpassify(query):
+    """This is the main overpassify function. It is implemented as a
+    singledispatch item with registers for each operation.
+
+    Possible Exceptions:
+        - IndexError
+        - see parse()
+
+    Known bugs:
+        - It does not consistently read the last line. The easiest workaround
+          is to add a noop() to the end of your function."""
     raise TypeError('Overpassify does not support {}.'.format(type(query)))
 
 
@@ -22,11 +38,14 @@ def _(funcbody):
 
 @overpassify.register(str)
 def _(source):
+    """This is the register which handles operations on function source code"""
     return parse(source)
 
 
 @overpassify.register(FunctionType)
 def _(func):
+    """This is the register that handles decorator behavior. It fetches the
+    func's source code, then calls overpassify on it"""
     try:
         source = getsource(func)
     except Exception:
@@ -36,6 +55,13 @@ def _(func):
 
 @singledispatch
 def parse(source, **kwargs):
+    """This is the main parser function. It is implemented as a singledispatch
+    item with registers for each operation.
+
+    Possible Exceptions:
+        - IndexError
+        - TypeError
+        - NameError"""
     print(source)
 
 
@@ -222,6 +248,16 @@ def _(call, **kwargs):
     elif name.endswith('.filter'):
         overpasstype = (name.split('.')[0]).lower()
         return overpasstype + parse(call.args[0])
+    elif name.endswith('.recurse_up'):
+        return ".{} <".format(name.split('.')[0])
+    elif name.endswith('.recurse_down'):
+        return ".{} >".format(name.split('.')[0])
+    elif name.endswith('.recurse_up_relations'):
+        return ".{} <<".format(name.split('.')[0])
+    elif name.endswith('.recurse_down_relations'):
+        return ".{} >>".format(name.split('.')[0])
+    elif name == 'noop':
+        return ''
     elif name == 'out':
         return call_out(call)
     elif name in {'Set', 'Way', 'Node', 'Area', 'Relation'}:
@@ -237,7 +273,7 @@ def _(call, **kwargs):
         else:
             return 'around:{},{},{}'.format(*args)
     else:
-        raise NameError('{} is not the name of a valid Overpass type'.format(name))
+        raise NameError('{} is not a valid Overpass type'.format(name))
 
 
 @parse.register(_ast.Attribute)
@@ -353,7 +389,7 @@ def call_constructor(call, name):
     elif len(call.args) == 0:
         return '{}{}'.format(overpasstype, tags)
     else:
-        raise IndexError('Calls to locators do not support multiple positional arguments')
+        raise IndexError('Locator calls supports 1 or 0 positional arguments')
 
 
 def call_out(call):

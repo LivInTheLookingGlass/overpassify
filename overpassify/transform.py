@@ -1,4 +1,5 @@
-import ast, _ast
+import ast
+import _ast
 from copy import copy, deepcopy
 from functools import singledispatch
 from random import randint
@@ -9,6 +10,10 @@ TMP_PREFIX = 'tmp'
 
 
 def transform(body):
+    """This is the main syntax transformation function. It takes Python syntaxes
+    which cannot be directly implemented in OverpassQL, and translates them to a
+    logical equivalent. This normally results in less efficient operations, with
+    many temporary variables."""
     changed = True
     transformed = []
     # pprint(body)
