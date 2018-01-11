@@ -241,6 +241,20 @@ def _(keyword, **kwargs):
 
 @parse.register(_ast.Call)
 def _(call, **kwargs):
+    """This register checks for the various functions that have been implemented
+    by OverpassQL. It is currently split into two subcalls for object call
+    syntax and global call syntax. This is not a distinction drawn in
+    OverpassQL, but one drawn here in order to make the code more readable."""
+    name = parse(call.func)[1:]
+    if name == 'noop':
+        return ''
+    elif '.' in name:
+        return _translate_object_call(call, **kwargs)
+    else:
+        return _translate_global_call(call, **kwargs)
+
+
+def _translate_object_call(call, **kwargs):
     name = parse(call.func)[1:]
     if name.endswith('.intersect'):
         overpasstype = (name.split('.')[0]).replace('Set', '').lower()
@@ -256,32 +270,22 @@ def _(call, **kwargs):
         return ".{} <<".format(name.split('.')[0])
     elif name.endswith('.recurse_down_relations'):
         return ".{} >>".format(name.split('.')[0])
-    elif name == 'is_in':
-        num = len(call.args)
-        if num == 0:
-            return 'is_in'
-        elif num == 1:
-            return parse(call.args[0]) + ' is_in'
-        elif num == 2:
-            return 'is_in({}, {})'.format(*call.args)
-        else:
-            raise IndexError("is_in needs 0-2 arguments, {} given".format(num))
-    elif name == 'noop':
-        return ''
-    elif name == 'out':
-        return call_out(call)
+    else:
+        raise NameError('{} is not a valid Overpass type'.format(name))
+
+
+def _translate_global_call(call, **kwargs):
+    name = parse(call.func)[1:]
+    if name == 'out':
+        return _call_out(call)
     elif name in {'Set', 'Way', 'Node', 'Area', 'Relation'}:
-        return call_constructor(call, name)
+        return _call_constructor(call, name)
     elif name == 'Regex':
         return 'Regex({})'.format(parse(call.args[0]))
+    elif name == 'is_in':
+        return _call_is_in(call)
     elif name == 'Around':
-        args = (parse(arg) for arg in call.args)
-        if len(call.args) == 1:
-            return 'around:{}'.format(*args)
-        elif len(call.args) == 2:
-            return 'around{}:{}'.format(*args)
-        else:
-            return 'around:{},{},{}'.format(*args)
+        return _call_around(call)
     else:
         raise NameError('{} is not a valid Overpass type'.format(name))
 
@@ -371,7 +375,10 @@ def parse_tags(key, value):
         return '["{}"="{}"]'.format(key, value)
 
 
-def call_constructor(call, name):
+def _call_constructor(call, name):
+    """This function provides a translation for set construction calls. It is
+    extracted from the main call translator in order to provide additional code
+    clarity."""
     if name == 'Set':
         return '({})'.format('; '.join(parse(arg) for arg in call.args))
     overpasstype = (name.split('.')[0]).lower()
@@ -402,7 +409,10 @@ def call_constructor(call, name):
         raise IndexError('Locator calls supports 1 or 0 positional arguments')
 
 
-def call_out(call):
+def _call_out(call):
+    """This function provides a translation for the out statement. It is
+    extracted from the main call translator in order to provide additional code
+    clarity."""
     if len(call.args) == 0:
         element = '._'
     else:
@@ -415,3 +425,31 @@ def call_out(call):
         if len(out_channels) == 0:
             return ret
     return ret + element + ' out {};'.format(' '.join(out_channels))
+
+
+def _call_is_in(call):
+    """This function provides a translation for the is_in statement. It is
+    extracted from the main call translator in order to provide additional code
+    clarity."""
+    num = len(call.args)
+    if num == 0:
+        return 'is_in'
+    elif num == 1:
+        return parse(call.args[0]) + ' is_in'
+    elif num == 2:
+        return 'is_in({}, {})'.format(*call.args)
+    else:
+        raise IndexError("is_in needs 0-2 arguments, {} given".format(num))
+
+
+def _call_around(call):
+    """This function provides a translation for the around statement. It is
+    extracted from the main call translator in order to provide additional code
+    clarity."""
+    args = (parse(arg) for arg in call.args)
+    if len(call.args) == 1:
+        return 'around:{}'.format(*args)
+    elif len(call.args) == 2:
+        return 'around{}:{}'.format(*args)
+    else:
+        return 'around:{},{},{}'.format(*args)
