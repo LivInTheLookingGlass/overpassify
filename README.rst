@@ -54,7 +54,7 @@ On the other hand, it will try to support a superset of easily-usable
 OverpassQL. Some of those extra features won't be as efficient as their
 Python counterparts, but they will be available.
 
-Currently ``overpassify`` supports 40/56 of the features listed in the
+Currently ``overpassify`` supports 41/56 of the features listed in the
 OverpassQL guide, and additionally supports ternary statements, ``if`` blocks,
 ``break``, and ``continue``.
 
@@ -285,6 +285,12 @@ Rough Translation Table
 +-----------------------+---------------------------------------+----------------------------------------------------+
 | ..Down (w/ relations) | ``.a >>`` or ``.a >> -> .b``          | ``a.recurse_down_relations()`                      |
 +-----------------------+---------------------------------------+----------------------------------------------------+
+| is_in filers          |                                       |                                                    |
++-----------------------+---------------------------------------+----------------------------------------------------+
+| ..On a set            | ``.a is_in -> .areas_with_part_of_a`` | ``areas_containing_part_of_a = is_in(a)``          |
++-----------------------+---------------------------------------+----------------------------------------------------+
+| ..On a lat/lon pair   | ``is_in(0, 0) -> .areas_with_0_0``    | ``areas_containing_0_0 = is_in(0, 0)``             |
++-----------------------+---------------------------------------+----------------------------------------------------+
 
 \* ``overpassify`` will allow for mixed sets here by repeating for each
 type. This may be optimized better in the future.
@@ -294,7 +300,6 @@ Features Not Yet Implemented
 
 #. Filters
 
-   #. is\_in Queries
    #. Key Regex
    #. Recursion Functions
    #. Filter By Bounding Box

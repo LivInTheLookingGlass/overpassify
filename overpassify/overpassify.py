@@ -256,6 +256,16 @@ def _(call, **kwargs):
         return ".{} <<".format(name.split('.')[0])
     elif name.endswith('.recurse_down_relations'):
         return ".{} >>".format(name.split('.')[0])
+    elif name == 'is_in':
+        num = len(call.args)
+        if num == 0:
+            return 'is_in'
+        elif num == 1:
+            return parse(call.args[0]) + ' is_in'
+        elif num == 2:
+            return 'is_in({}, {})'.format(*call.args)
+        else:
+            raise IndexError("is_in needs 0-2 arguments, {} given".format(num))
     elif name == 'noop':
         return ''
     elif name == 'out':
