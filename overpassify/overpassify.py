@@ -111,6 +111,8 @@ def _(name, **kwargs):
 @parse.register(_ast.BinOp)
 @parse.register(_ast.BoolOp)
 def _(operation, **kwargs):
+    """Translates binary and boolean operation statements by passing it to a
+    more specialized parser with a value keyword assigned"""
     return parse(
         operation.op,
         left=operation.left,
@@ -120,11 +122,14 @@ def _(operation, **kwargs):
 
 @parse.register(_ast.UnaryOp)
 def _(operation, **kwargs):
+    """Translates Unary operation statements by passing it to a more specialized
+    parser with a value keyword assigned"""
     return parse(operation.op, value=operation.operand)
 
 
 @parse.register(_ast.Add)  # TODO: make work with count()
 def _(_, **kwargs):
+    """Translates addition statements"""
     left, right = parse(kwargs['left']), parse(kwargs['right'])
     try:
         float(left)
@@ -144,6 +149,7 @@ def _(_, **kwargs):
 
 @parse.register(_ast.Sub)  # TODO: make work with count()
 def _(_, **kwargs):
+    """Translates subtraction statements"""
     left, right = parse(kwargs['left']), parse(kwargs['right'])
     try:
         float(left)
@@ -163,40 +169,54 @@ def _(_, **kwargs):
 
 @parse.register(_ast.Mult)  # TODO: make work with count()
 def _(_, **kwargs):
+    """Translates multiplication statements"""
     left, right = parse(kwargs['left']), parse(kwargs['right'])
     return '{} * {}'.format(left, right)
 
 
 @parse.register(_ast.Div)  # TODO: make work with count()
 def _(_, **kwargs):
+    """Translates float division statements"""
     left, right = parse(kwargs['left']), parse(kwargs['right'])
     return '{} / {}'.format(left, right)
 
 
+@parse.register(_ast.FloorDiv)
+def _(_, **kwargs):
+    """This is a placeholder for the floor division operator. It shouldn't be
+    very hard to emulate, so I'm marking it out specifically"""
+    raise TypeError("Floor division is not supported by OverpassQL")
+
+
 @parse.register(_ast.And)
 def _(_, **kwargs):
+    """Translates boolean and statements"""
     left, right = parse(kwargs['left']), parse(kwargs['right'])
     return '{} && {}'.format(left, right)
 
 
 @parse.register(_ast.Or)
 def _(_, **kwargs):
+    """Translates boolean or statements"""
     left, right = parse(kwargs['left']), parse(kwargs['right'])
     return '{} || {}'.format(left, right)
 
 
 @parse.register(_ast.USub)
 def _(_, **kwargs):
+    """Translates unary negation statements"""
     return "-{}".format(parse(kwargs['value']))
 
 
 @parse.register(_ast.Not)
 def _(_, **kwargs):
+    """Translates boolean negation statements"""
     return "!{}".format(parse(kwargs['value']))
 
 
 @parse.register(_ast.Compare)
 def _(comp, **kwargs):
+    """Translates comparison statements"""
     return parse(
         comp.ops[0],
         left=comp.left,
@@ -206,31 +226,37 @@ def _(comp, **kwargs):
 
 @parse.register(_ast.Eq)
 def _(_, **kwargs):
+    """Translates equality statements"""
     return "{} == {}".format(parse(kwargs['left']), parse(kwargs['right']))
 
 
 @parse.register(_ast.NotEq)
 def _(_, **kwargs):
+    """Translates non-equality statements"""
     return "{} != {}".format(parse(kwargs['left']), parse(kwargs['right']))
 
 
 @parse.register(_ast.GtE)
 def _(_, **kwargs):
+    """Translates greater-than-or-equal-to statements"""
     return "{} >= {}".format(parse(kwargs['left']), parse(kwargs['right']))
 
 
 @parse.register(_ast.Gt)
 def _(_, **kwargs):
+    """Translates greater-than statements"""
     return "{} > {}".format(parse(kwargs['left']), parse(kwargs['right']))
 
 
 @parse.register(_ast.LtE)
 def _(_, **kwargs):
+    """Translates less-than-or-equal-to statements"""
     return "{} <= {}".format(parse(kwargs['left']), parse(kwargs['right']))
 
 
 @parse.register(_ast.Lt)
 def _(_, **kwargs):
+    """Translates less-than statements"""
     return "{} < {}".format(parse(kwargs['left']), parse(kwargs['right']))
 
 
