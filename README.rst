@@ -154,13 +154,13 @@ Unfortunately, since this is not a native feature to OverpassQL, it ends
 up evaluating both sides of that statement.
 
 If you want ``c`` to be an empty set, however, we can optimize that. So
-``foo = a if b else Set()`` is the syntax to use there.
+``foo = a if b else <type>()`` is the syntax to use there.
 
 Additional performance is lost because OverpassQL does not support a
 conditional being the *only* filter. This means that we need to provide
 some other filter, and one in current use is to divide it by type and
-reconstruct. There is some progress which can be made here, but it's not
-yet a priority.
+reconstruct. Because of this, filtering down to the appropriate set type yields
+significantly batter performance.
 
 Returning Data
 --------------
@@ -275,7 +275,7 @@ Rough Translation Table
 +-----------------------+---------------------------------------+----------------------------------------------------+
 | Ternary               | very long                             | ``<expr> if <condition> else <expr>``              |
 +-----------------------+---------------------------------------+----------------------------------------------------+
-| Conditional Filter    | ``<type>.<set>(if: <condition>)``\ \* | ``<expr> if <condition> else Set()``               |
+| Conditional Filter    | ``<type>.<set>(if: <condition>)``     | ``<expr> if <condition> else <type>()``            |
 +-----------------------+---------------------------------------+----------------------------------------------------+
 | For Loop              | ``foreach.<set>->.<each>(<body>)``    | ``for <each> in <set>:\n    <body>``               |
 +-----------------------+---------------------------------------+----------------------------------------------------+
@@ -297,9 +297,6 @@ Rough Translation Table
 +-----------------------+---------------------------------------+----------------------------------------------------+
 | ..On a lat/lon pair   | ``is_in(0, 0) -> .areas_with_0_0``    | ``areas_containing_0_0 = is_in(0, 0)``             |
 +-----------------------+---------------------------------------+----------------------------------------------------+
-
-\* ``overpassify`` will allow for mixed sets here by repeating for each
-type. This may be optimized better in the future.
 
 Features Not Yet Implemented
 ----------------------------

@@ -1,3 +1,18 @@
+"""This is the syntax transformation file. It contains functions which
+translate some more complicated Python syntaxes into simpler (if less
+performant) ones which can be implemented in OverpassQL. All code which is left
+after this process can be translated by the functions in overpassify.py.
+
+It contains two relevant functions:
+
+transform(body: list) -> list
+    The "public" facing function which provides all transformation services
+
+scan(body: Union[list, _ast.If], **kwargs) -> Bool
+    The function which scans for ternery statemenets in the underlying
+    structure. If none is seen, it returns False.
+"""
+
 import ast
 import _ast
 from copy import copy, deepcopy
@@ -10,10 +25,10 @@ TMP_PREFIX = 'tmp'
 
 
 def transform(body):
-    """This is the main syntax transformation function. It takes Python syntaxes
-    which cannot be directly implemented in OverpassQL, and translates them to a
-    logical equivalent. This normally results in less efficient operations, with
-    many temporary variables."""
+    """This is the main syntax transformation function. It takes Python
+    syntaxes which cannot be directly implemented in OverpassQL, and translates
+    them to a logical equivalent. This normally results in less efficient
+    operations, with many temporary variables."""
     changed = True
     transformed = []
     # pprint(body)
@@ -113,7 +128,8 @@ def _(item, body=None, top=False):
         if isinstance(item.args[0], _ast.Call):
             _transform(item.args[0], body=body, top=top)
         if not isinstance(item.args[0], (_ast.Name, _ast.Num)):
-            syntax = ast.parse('tmpcall{} = b'.format(randint(0, 2**32))).body[0]
+            num = randint(0, 2**32)
+            syntax = ast.parse('tmpcall{} = b'.format(num)).body[0]
             syntax.value = item.args[0]
             item.args[0] = syntax.targets[0]
             body.extend((syntax, item))
@@ -152,14 +168,14 @@ def transform_break(item, name=''):
         if isinstance(statement, _ast.If):
             statement = transform_break(statement, name=name)[1]
         elif isinstance(statement, _ast.Break):
-            statement = ast.parse('{name} = Way.filter({name})'.format(name=name)).body[0]
+            statement = ast.parse('{0} = Way.filter({0})'.format(name)).body[0]
         cond.body = [statement]
         new_body.append(cond)
     item.body = new_body
     if len(item.orelse) > 0:
-        assignment = ast.parse('{}else = Relation(2186646)'.format(name)).body[0]
+        assignment = ast.parse('{}else=Relation(2186646)'.format(name)).body[0]
         didbreak = ast.parse('for _ in {}: a()'.format(name)).body[0]
-        didbreak.body = ast.parse('{}else = Way.filter({})'.format(name, name)).body
+        didbreak.body = ast.parse('{0}else=Way.filter({0})'.format(name)).body
         condition = ast.parse('for _ in {}else: a()'.format(name)).body[0]
         condition.body = item.orelse
         body += [assignment, didbreak, condition]
@@ -179,7 +195,7 @@ def transform_continue(item, name=''):
         if isinstance(statement, _ast.If):
             statement = transform_continue(statement, name=name)[1]
         elif isinstance(statement, _ast.Continue):
-            statement = ast.parse('{name} = Way.filter({name})'.format(name=name)).body[0]
+            statement = ast.parse('{0} = Way.filter({0})'.format(name)).body[0]
         cond.body = [statement]
         new_body.append(cond)
     item.body = new_body

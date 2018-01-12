@@ -1,3 +1,20 @@
+"""This is the main transpiler file. It contains functions which provide
+translation of a simple subset of Python into OverpassQL. Many of the more
+advanced features are provided by transform.py, not this file.
+
+It contains two relevant functions:
+
+overpassify(query: Union[FunctionType, str, List[str]]) -> str
+    This is the main function of the library. It provides the public API for
+    all language translation features. It is the *only* function meant to be
+    called by an outside user.
+
+parse(source, **kwargs) -> str
+    This is the function which translates individual AST elements of Python
+    into the relevant OverpassQL code. It is started by feeding in a string,
+    which it then parses, following for each AST body element.
+"""
+
 import ast
 import _ast
 from functools import singledispatch
@@ -337,7 +354,42 @@ def _(ifExp, **kwargs):
     expr2 = parse(ifExp.orelse)
     name = parse(kwargs['name']) if 'name' in kwargs else '._'
     condition = parse(ifExp.test)
-    if expr2 != '()':
+    if expr2 == '()':
+        return '''({expr1};) -> {name};
+        (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};'''.format(
+            expr1=expr1,
+            name=name,
+            condition=condition
+        )
+    elif expr2 == 'way':
+        return '''({expr1};) -> {name};
+        way{name}(if: {condition}) -> {name};'''.format(
+            expr1=expr1,
+            name=name,
+            condition=condition
+        )
+    elif expr2 == 'area':
+        return '''({expr1};) -> {name};
+        area{name}(if: {condition}) -> {name};'''.format(
+            expr1=expr1,
+            name=name,
+            condition=condition
+        )
+    elif expr2 == 'node':
+        return '''({expr1};) -> {name};
+        node{name}(if: {condition}) -> {name};'''.format(
+            expr1=expr1,
+            name=name,
+            condition=condition
+        )
+    elif expr2 == 'relation':
+        return '''({expr1};) -> {name};
+        relation{name}(if: {condition}) -> {name};'''.format(
+            expr1=expr1,
+            name=name,
+            condition=condition
+        )
+    else:
         tmpname = '.' + TMP_PREFIX + name[1:]
         return '''({expr1};) -> {name};
         (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};
@@ -347,13 +399,6 @@ def _(ifExp, **kwargs):
             expr2=expr2,
             name=name,
             tmpname=tmpname,
-            condition=condition
-        )
-    else:
-        return '''({expr1};) -> {name};
-        (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};'''.format(
-            expr1=expr1,
-            name=name,
             condition=condition
         )
 
