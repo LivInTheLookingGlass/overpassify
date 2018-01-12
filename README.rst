@@ -26,7 +26,7 @@ now, ``overpassify`` can take a snippet like:
 
 And from that generate:
 
-.. code:: OverpassQL
+.. code::
 
     (area(3600134503);) -> .search;
     (way["highway"](area.search);) -> .ways;
