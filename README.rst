@@ -1,7 +1,9 @@
 overpassify
 ===========
 
-A Python to OverpassQL transpiler
+A Python to OverpassQL transpiler, now on both `GitHub 
+<https://github.com/LivInTheLookingGlass/overpassify>`__ and `GitLab
+<https://gitlab.com/LivInTheLookingGlass/overpassify>`__
 
 `OverpassQL <http://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL>`__
 is the language used to query features on OpenStreetMap. Unfortunately,
