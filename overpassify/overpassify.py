@@ -278,7 +278,6 @@ def _(_, **kwargs):
 
 @parse.register(_ast.keyword)
 def _(keyword, **kwargs):
-    pdb.set_trace()
     return keyword.arg, parse(keyword.value)
 
 
@@ -286,7 +285,10 @@ def _(keyword, **kwargs):
 def _(dict_, **kwargs):
     """Translates an ast dictionary into a real one, while stripping the key of
     quotation marks"""
-    return {parse(k)[1:-1]: parse(v) for k, v in zip(dict_.keys, dict_.values)}
+    values = (parse(value) for value in dict_.values)
+    keys = (parse(key) for key in dict_.keys)
+    keys = (key[1:-1] if key[0] == '"' else key for key in keys)
+    return dict(zip(keys, values))
 
 
 @parse.register(_ast.Call)
@@ -421,14 +423,26 @@ def _(expr, **kwargs):
 
 
 def parse_tags(key, value):
-    if value is None:
+    def switch(x):
+        if isinstance(x, str):
+            if x.startswith('Regex('):
+                return "~{}".format(x[6:-1])
+            elif x.startswith('NotRegex('):
+                return "!~{}".format(x[9:-1])
+        return x
+
+    key, value = switch(key), switch(value)
+    if key.startswith("!"):
+        raise ValueError("Keys cannot use NotRegex()")
+    elif key.startswith("~") and (value in (None, ...)
+                                  or not value.startswith("~")):
+        raise ValueError("Key Regex() must be with value Regex()")
+    elif value is None:
         return '[!"{}"]'.format(key)
     elif value == (...):
         return '["{}"]'.format(key)
-    elif value.startswith('Regex('):
-        return '["{}"~{}]'.format(key, value[6:-1])
-    elif value.startswith('NotRegex('):
-        return '["{}"!~{}]'.format(key, value[9:-1])
+    elif value.startswith('~') or value.startswith('!'):
+        return "[{}{}]".format(key, value)
     else:
         return '["{}"="{}"]'.format(key, value)
 
