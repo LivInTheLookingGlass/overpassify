@@ -40,7 +40,7 @@ def main():
         packages=['overpassify'],
         long_description=read('README.rst'),
         url='https://github.com/LivInTheLookingGlass/overpassify',
-        install_require=('dill', 'singledispatch'),
+        install_require=read('requirements.txt').splitlines(),
         classifiers=classifiers)
 
 
