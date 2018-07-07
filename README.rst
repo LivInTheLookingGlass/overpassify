@@ -1,7 +1,7 @@
 overpassify
 ===========
 
-A Python to OverpassQL transpiler, now on both `GitHub 
+A Python to OverpassQL transpiler, now on both `GitHub
 <https://github.com/LivInTheLookingGlass/overpassify>`__ and `GitLab
 <https://gitlab.com/LivInTheLookingGlass/overpassify>`__
 
@@ -21,6 +21,7 @@ now, ``overpassify`` can take a snippet like:
     def query():
         search = Area(3600134503)
         ways = Way(search, highway=...)
+        odd_keys_demo = Way(search, **{Regex('maxspeed(?::.+)?'): Regex('.+ mph')})
         nodes = Node(search)
         out(ways, geom=True, count=True)
         out(nodes, geom=True, count=True)
@@ -32,6 +33,7 @@ And from that generate:
 
     (area(3600134503);) -> .search;
     (way["highway"](area.search);) -> .ways;
+    (way[~"maxspeed(?::.+)?"~".+ mph"](area.search);) -> .odd_keys_demo;
     (node(area.search);) -> .nodes;
     .ways out count;
     .ways out geom;
@@ -141,6 +143,11 @@ Tag matching can be done with keyword arguments. So if you look for
 supports existence checking (``Way(highway=...)``), and non-existence
 checking (``Area(landuse=None)``), and regex matching
 (``Way(highway=Regex("path|cycleway|sidewalk"))``).
+
+For keys which are not usable as a keyword, you can use a "splatted" dictionary.
+For instance ``Node(**{'maxspeed:advisory': Regex('.+ mph')})``. The same
+follows for regex key matching, though regex key matching *must* be with a
+regex value.
 
 You can also search by both an area and a filter. For instance:
 ``Way(<your hometown>, maxspeed=None)``.

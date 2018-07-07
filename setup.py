@@ -30,7 +30,7 @@ classifiers.extend((('Programming Language :: Python :: %s' % x)
 def main():
     setup(
         name='overpassify',
-        version='1.2.1',
+        version='1.2.2',
         author='Olivia Appleton',
         author_email='olivia.kay.appleton@gmail.com',
         description='A tool to more easily develop queries of OpenStreetMap',
