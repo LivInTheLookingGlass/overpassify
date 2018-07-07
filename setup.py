@@ -15,17 +15,13 @@ def read(fname):
 
 
 classifiers = [
-    'Development Status :: 4 - Beta',
-    'Intended Audience :: Developers',
+    'Development Status :: 4 - Beta', 'Intended Audience :: Developers',
     'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
-    'Operating System :: OS Independent',
-    'Topic :: Internet',
+    'Operating System :: OS Independent', 'Topic :: Internet',
     'Topic :: Scientific/Engineering :: GIS',
     'Topic :: Software Development :: Compilers',
-    'Programming Language :: Other',
-    'Programming Language :: Python'
+    'Programming Language :: Other', 'Programming Language :: Python'
 ]
-
 
 classifiers.extend((('Programming Language :: Python :: %s' % x)
                     for x in '2 3 2.7 3.3 3.4 3.5 3.6 3.7'.split()))
@@ -34,7 +30,7 @@ classifiers.extend((('Programming Language :: Python :: %s' % x)
 def main():
     setup(
         name='overpassify',
-        version='1.1.3',
+        version='1.2.0',
         author='Olivia Appleton',
         author_email='olivia.kay.appleton@gmail.com',
         description='A tool to more easily develop queries of OpenStreetMap',
@@ -45,8 +41,7 @@ def main():
         long_description=read('README.rst'),
         url='https://github.com/LivInTheLookingGlass/overpassify',
         install_require=('dill', 'singledispatch'),
-        classifiers=classifiers
-    )
+        classifiers=classifiers)
 
 
 if __name__ == '__main__':
