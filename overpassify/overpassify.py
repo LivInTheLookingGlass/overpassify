@@ -16,19 +16,25 @@ parse(source, **kwargs) -> str
 """
 
 import ast
-import _ast
-from functools import singledispatch
 from inspect import getsource
+from itertools import chain
 from random import randint
 from types import FunctionType
+
+import _ast
+
+from .transform import transform
+
+try:
+    from functools import singledispatch
+except ImportError:
+    from singledispatch import singledispatch
 
 try:
     from dill.source import getsource as dillgetsource
 except ImportError:
     from warnings import warn
     warn("Could not import dill. No fallback available for source fetching")
-
-from .transform import transform
 
 TMP_PREFIX = 'tmp'
 
@@ -96,7 +102,10 @@ def _(tree, **kwargs):
         if func == 'Settings':
             keywords = (parse(kwarg) for kwarg in tree[0].value.keywords)
             for key, value in keywords:
-                if value[0] == '"':
+                if isinstance(value, dict):
+                    for k, v in value.items():
+                        options += '[{}:{}]'.format(parse(k), parse(v))
+                elif value[0] == '"':
                     options += '[{}:{}]\n'.format(key, value[1:-1])
                 else:
                     options += '[{}:{}]\n'.format(key, value)
@@ -110,9 +119,7 @@ def _(assignment, **kwargs):
         return parse(assignment.value, name=assignment.targets[0])
     else:
         return '({};) -> {};'.format(
-            parse(assignment.value),
-            parse(assignment.targets[0])
-        )
+            parse(assignment.value), parse(assignment.targets[0]))
 
 
 @parse.register(_ast.Expr)
@@ -130,11 +137,7 @@ def _(name, **kwargs):
 def _(operation, **kwargs):
     """Translates binary and boolean operation statements by passing it to a
     more specialized parser with a value keyword assigned"""
-    return parse(
-        operation.op,
-        left=operation.left,
-        right=operation.right
-    )
+    return parse(operation.op, left=operation.left, right=operation.right)
 
 
 @parse.register(_ast.UnaryOp)
@@ -234,11 +237,7 @@ def _(_, **kwargs):
 @parse.register(_ast.Compare)
 def _(comp, **kwargs):
     """Translates comparison statements"""
-    return parse(
-        comp.ops[0],
-        left=comp.left,
-        right=comp.comparators[0]
-    )
+    return parse(comp.ops[0], left=comp.left, right=comp.comparators[0])
 
 
 @parse.register(_ast.Eq)
@@ -279,7 +278,15 @@ def _(_, **kwargs):
 
 @parse.register(_ast.keyword)
 def _(keyword, **kwargs):
+    pdb.set_trace()
     return keyword.arg, parse(keyword.value)
+
+
+@parse.register(_ast.Dict)
+def _(dict_, **kwargs):
+    """Translates an ast dictionary into a real one, while stripping the key of
+    quotation marks"""
+    return {parse(k)[1:-1]: parse(v) for k, v in zip(dict_.keys, dict_.values)}
 
 
 @parse.register(_ast.Call)
@@ -357,38 +364,23 @@ def _(ifExp, **kwargs):
     if expr2 == '()':
         return '''({expr1};) -> {name};
         (way{name}(if: {condition}); area{name}(if: {condition}); node{name}(if: {condition}); relation{name}(if: {condition});) -> {name};'''.format(
-            expr1=expr1,
-            name=name,
-            condition=condition
-        )
+            expr1=expr1, name=name, condition=condition)
     elif expr2 == 'way':
         return '''({expr1};) -> {name};
         way{name}(if: {condition}) -> {name};'''.format(
-            expr1=expr1,
-            name=name,
-            condition=condition
-        )
+            expr1=expr1, name=name, condition=condition)
     elif expr2 == 'area':
         return '''({expr1};) -> {name};
         area{name}(if: {condition}) -> {name};'''.format(
-            expr1=expr1,
-            name=name,
-            condition=condition
-        )
+            expr1=expr1, name=name, condition=condition)
     elif expr2 == 'node':
         return '''({expr1};) -> {name};
         node{name}(if: {condition}) -> {name};'''.format(
-            expr1=expr1,
-            name=name,
-            condition=condition
-        )
+            expr1=expr1, name=name, condition=condition)
     elif expr2 == 'relation':
         return '''({expr1};) -> {name};
         relation{name}(if: {condition}) -> {name};'''.format(
-            expr1=expr1,
-            name=name,
-            condition=condition
-        )
+            expr1=expr1, name=name, condition=condition)
     else:
         tmpname = '.' + TMP_PREFIX + name[1:]
         return '''({expr1};) -> {name};
@@ -399,8 +391,7 @@ def _(ifExp, **kwargs):
             expr2=expr2,
             name=name,
             tmpname=tmpname,
-            condition=condition
-        )
+            condition=condition)
 
 
 @parse.register(_ast.For)
@@ -411,8 +402,7 @@ def _(forExp, **kwargs):
         {body});'''.format(
         collection=collection,
         slot=slot,
-        body="\n".join(parse(expr) for expr in forExp.body)
-    )
+        body="\n".join(parse(expr) for expr in forExp.body))
 
 
 @parse.register(_ast.Ellipsis)
@@ -427,10 +417,7 @@ def _(const, **kwargs):
 
 @parse.register(_ast.Subscript)
 def _(expr, **kwargs):
-    return "{}[{}]".format(
-        parse(expr.value)[1:],
-        parse(expr.slice.value)
-    )
+    return "{}[{}]".format(parse(expr.value)[1:], parse(expr.slice.value))
 
 
 def parse_tags(key, value):
@@ -453,27 +440,18 @@ def _call_constructor(call, name):
     if name == 'Set':
         return '({})'.format('; '.join(parse(arg) for arg in call.args))
     overpasstype = (name.split('.')[0]).lower()
-    tags = "".join(parse_tags(*parse(kwarg)) for kwarg in call.keywords)
+    kws = [parse(kwarg) for kwarg in call.keywords]
+    kws = chain(*(k[1].items() if isinstance(k[1], dict) else (k, )
+                  for k in kws))
+    tags = "".join(parse_tags(*kwarg) for kwarg in kws)
     if len(call.args) == 1:
         arg = parse(call.args[0])
         if arg.startswith('around'):
-            return '{}{}(around{})'.format(
-                overpasstype,
-                tags,
-                arg[6:]
-            )
+            return '{}{}(around{})'.format(overpasstype, tags, arg[6:])
         elif arg.isnumeric():
-            return '{}{}({})'.format(
-                overpasstype,
-                tags,
-                arg
-            )
+            return '{}{}({})'.format(overpasstype, tags, arg)
         else:
-            return '{}{}({})'.format(
-                overpasstype,
-                tags,
-                'area' + arg
-            )
+            return '{}{}({})'.format(overpasstype, tags, 'area' + arg)
     elif len(call.args) == 0:
         return '{}{}'.format(overpasstype, tags)
     else:
