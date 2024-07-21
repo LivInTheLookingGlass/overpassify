@@ -1,4 +1,5 @@
 build: clean LICENSE
+	python3 -m pip install setuptools wheel
 	python3 setup.py bdist_wheel --universal
 	python3 setup.py sdist
 
@@ -7,4 +8,5 @@ clean:
 	rm -r build dist
 
 publish: build
-	twine upload -u LivInTheLookingGlass -s --sign-with gpg2 dist/*
+	python3 -m pip install twine
+	python3 -m twine upload -u __token__ -s --sign-with gpg2 dist/*
